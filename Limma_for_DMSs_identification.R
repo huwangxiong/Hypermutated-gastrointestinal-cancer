@@ -1,0 +1,18 @@
+source("http://bioconductor.org/biocLite.R") 
+biocLite("limma") 
+library(limma)
+setwd("F:/TCGA/methylation")
+exp<-read.table("CRC_methylation.txt",sep="\t",header=T)
+rownames(exp)<-exp[,1]
+exp<-exp[2:286]
+exp<-as.matrix(exp)
+samps<-factor(c(rep("Hyper",47),rep("Non_hyper",238)))
+design<-model.matrix(~0+samps)
+colnames(design)<-c("Hyper","Non_hyper")
+fit<-lmFit(exp,design)
+cont.matrix<-makeContrasts(Hyper-Non_hyper,levels=design)
+fit2<-contrasts.fit(fit, cont.matrix)
+fit2 <- eBayes(fit2)
+final<-topTable(fit2, coef=1,number=dim(exp)[1],adjust.method="BH",sort.by="B")
+P_value_sig<-subset(final, adj.P.Val<1E-20)
+write.table(P_value_sigP_value_sig,paste("Hyper_Non_hyper","_limma.txt"),quote=F,sep="\t")
